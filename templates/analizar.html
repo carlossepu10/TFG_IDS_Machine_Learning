@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}Analizar tráfico- Sistema IDS{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <div class="mb-4">
+        <h1 class="mb-2">Analizar tráfico de red</h1>
+        <p class="text-muted">
+            Sube un archivo CSV con características de tráfico de red compatible con CIC-IDS2017.
+            El sistema analizará cada muestra mediante el modelo de Machine Learning seleccionado.
+        </p>
+    </div>
+
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    {% if columnas_faltantes %}
+        <div class="alert alert-warning">
+            <strong>El archivo no contiene todas las columnas necesarias.</strong>
+            <p class="mb-2">
+                Algunas columnas faltantes son:
+            </p>
+            <ul class="mb-0">
+                {% for columna in columnas_faltantes %}
+                    <li>{{ columna }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="row">
+
+        <div class="col-lg-7 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    Subida de archivo CSV
+                </div>
+
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('auth.analizar') }}" enctype="multipart/form-data">
+
+                        <div class="mb-3">
+                            <label for="archivo" class="form-label">Archivo CSV</label>
+                            <input 
+                                type="file" 
+                                class="form-control" 
+                                id="archivo" 
+                                name="archivo" 
+                                accept=".csv" 
+                                required
+                            >
+                            <div class="form-text">
+                                Solo se permiten archivos con extensión .csv.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="modelo" class="form-label">Modelo de análisis</label>
+                            <select class="form-select" id="modelo" name="modelo" required>
+                                {% for clave, datos in modelos.items() %}
+                                    <option value="{{ clave }}">
+                                        {{ datos.nombre }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">
+                                Selecciona el algoritmo de Machine Learning que se utilizará para analizar el archivo.
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning">
+                            Analizar archivo
+                        </button>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    Formato esperado
+                </div>
+
+                <div class="card-body">
+                    <p>
+                        El archivo debe contener características de tráfico de red compatibles con el modelo entrenado.
+                    </p>
+
+                    <p>
+                        Puede incluir la columna <code>Label</code>, aunque será ignorada durante la predicción.
+                    </p>
+
+                    <p class="mb-2">
+                        Algunas columnas esperadas son:
+                    </p>
+
+                    <ul class="mb-3">
+                        <li><code>Destination Port</code></li>
+                        <li><code>Flow Duration</code></li>
+                        <li><code>Total Fwd Packets</code></li>
+                        <li><code>Total Backward Packets</code></li>
+                        <li><code>Flow Bytes/s</code></li>
+                        <li><code>Flow Packets/s</code></li>
+                    </ul>
+
+                    <p class="mb-0 text-muted">
+                        Dataset utilizado para el entrenamiento: CIC-IDS2017, tráfico benigno y ataques DDoS.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card mt-4 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Historial de análisis</span>
+        </div>
+
+        <div class="card-body">
+
+            {% if analisis and analisis|length > 0 %}
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Fecha</th>
+                                <th>Archivo</th>
+                                <th>Estado</th>
+                                <th>Clasificación</th>
+                                <th>Probabilidad</th>
+                                <th>Modelo</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for a in analisis %}
+                                <tr>
+                                    <td>{{ a[0] }}</td>
+
+                                    <td>
+                                        {% if a[6] %}
+                                            {{ a[6] }}
+                                        {% else %}
+                                            <span class="text-muted">Sin fecha</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>{{ a[1] }}</td>
+
+                                    <td>
+                                        {% if a[2] == "Finalizado" %}
+                                            <span class="badge bg-success">{{ a[2] }}</span>
+                                        {% elif a[2] == "Pendiente" %}
+                                            <span class="badge bg-warning text-dark">{{ a[2] }}</span>
+                                        {% elif a[2] == "Error" %}
+                                            <span class="badge bg-danger">{{ a[2] }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ a[2] }}</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if a[3] == "Malicioso" %}
+                                            <span class="badge bg-danger">Malicioso</span>
+                                        {% elif a[3] == "Normal" %}
+                                            <span class="badge bg-success">Normal</span>
+                                        {% elif a[3] %}
+                                            <span class="badge bg-secondary">{{ a[3] }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Sin resultado</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if a[4] is not none %}
+                                            {{ "%.2f"|format(a[4] * 100) }}%
+                                        {% else %}
+                                            <span class="text-muted">No disponible</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if a[5] and modelos and a[5] in modelos %}
+                                            {{ modelos[a[5]].nombre }}
+                                        {% elif a[5] %}
+                                            {{ a[5] }}
+                                        {% else %}
+                                            Random Forest
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if a[2] == "Finalizado" %}
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                <a href="{{ url_for('auth.ver_resultado', analisis_id=a[0]) }}" class="btn btn-sm btn-outline-primary">
+                                                    Ver
+                                                </a>
+
+                                                <a href="{{ url_for('auth.descargar_pdf', analisis_id=a[0]) }}" class="btn btn-sm btn-outline-success">
+                                                    PDF
+                                                </a>
+
+                                                <a href="{{ url_for('auth.descargar_csv_filtrado', analisis_id=a[0]) }}" class="btn btn-sm btn-outline-success">
+                                                    CSV benigno
+                                                </a>
+
+                                                <a href="{{ url_for('auth.descargar_csv_malicioso', analisis_id=a[0]) }}" class="btn btn-sm btn-outline-danger">
+                                                    CSV malicioso
+                                                </a>
+
+                                                <form method="POST" action="{{ url_for('auth.eliminar_analisis', analisis_id=a[0]) }}"
+                                                      onsubmit="return confirm('¿Seguro que quieres eliminar este análisis?');">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                        Eliminar
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        {% else %}
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                <span class="text-muted">No disponible</span>
+
+                                                <form method="POST" action="{{ url_for('auth.eliminar_analisis', analisis_id=a[0]) }}"
+                                                      onsubmit="return confirm('¿Seguro que quieres eliminar este análisis?');">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                        Eliminar
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+
+                    </table>
+                </div>
+
+            {% else %}
+
+                <div class="alert alert-info mb-0">
+                    Todavía no se ha realizado ningún análisis. Sube un archivo CSV para comenzar.
+                </div>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

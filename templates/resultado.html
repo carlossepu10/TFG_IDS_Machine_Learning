@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Resultado del análisis{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <h1 class="mb-4">Resultado del análisis</h1>
+
+    {% if resultado_general %}
+        <div class="alert alert-{{ tipo_resultado }}">
+            <h4 class="alert-heading">{{ resultado_general }}</h4>
+            <p class="mb-0">{{ descripcion }}</p>
+        </div>
+    {% endif %}
+
+    <div class="row mt-4">
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-header">
+                    Total analizado
+                </div>
+                <div class="card-body">
+                    <h2>{{ total }}</h2>
+                    <p class="text-muted mb-0">muestras válidas</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-header">
+                    Tráfico benigno
+                </div>
+                <div class="card-body">
+                    <h2>{{ benignos }}</h2>
+                    <p class="text-muted mb-0">{{ porcentaje_benigno }}%</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-header">
+                    Tráfico DDoS
+                </div>
+                <div class="card-body">
+                    <h2>{{ maliciosos }}</h2>
+                    <p class="text-muted mb-0">{{ porcentaje_malicioso }}%</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-header">
+                    Modelo usado
+                </div>
+                <div class="card-body">
+                    <h5>{{ modelo_nombre }}</h5>
+                    <p class="text-muted mb-0">algoritmo ML</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            Información del archivo
+        </div>
+
+        <div class="card-body">
+            <p><strong>ID del análisis:</strong> {{ r[0] }}</p>
+            <p><strong>Archivo analizado:</strong> {{ r[1] }}</p>
+            <p><strong>Estado:</strong> {{ r[3] }}</p>
+            <p><strong>Clasificación guardada:</strong> {{ r[4] }}</p>
+            <p><strong>Modelo utilizado:</strong> {{ modelo_nombre }}</p>
+
+            {% if r[7] %}
+                <p><strong>Fecha del análisis:</strong> {{ r[7] }}</p>
+            {% else %}
+                <p><strong>Fecha del análisis:</strong> No disponible</p>
+            {% endif %}
+
+            {% if r[5] is not none %}
+                <p class="mb-0">
+                    <strong>Probabilidad de tráfico malicioso:</strong>
+                    {{ "%.2f"|format(r[5] * 100) }}%
+                </p>
+            {% else %}
+                <p class="mb-0">
+                    <strong>Probabilidad de tráfico malicioso:</strong>
+                    No disponible
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            Interpretación
+        </div>
+
+        <div class="card-body">
+            <p>
+                El sistema ha procesado el archivo CSV utilizando el modelo
+                <strong>{{ modelo_nombre }}</strong>.
+                Cada fila del archivo se interpreta como una muestra de tráfico de red.
+            </p>
+
+            <p>
+                Las muestras clasificadas como <strong>BENIGN</strong> representan tráfico normal,
+                mientras que las muestras clasificadas como <strong>DDoS</strong> representan tráfico potencialmente malicioso.
+            </p>
+
+            <p>
+                En este análisis se han detectado <strong>{{ maliciosos }}</strong> muestras DDoS de un total de
+                <strong>{{ total }}</strong> muestras válidas, lo que representa un
+                <strong>{{ porcentaje_malicioso }}%</strong> del archivo analizado.
+            </p>
+
+            <p>
+                Además, el sistema permite descargar dos archivos CSV derivados del análisis:
+                uno con las muestras clasificadas como benignas y otro con las muestras clasificadas como maliciosas.
+            </p>
+
+            <p class="mb-0 text-muted">
+                Este resultado depende de las características presentes en el archivo, del dataset CIC-IDS2017
+                y del algoritmo seleccionado durante el análisis.
+            </p>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('auth.analizar') }}" class="btn btn-warning">
+            Analizar otro archivo
+        </a>
+
+        <a href="{{ url_for('auth.descargar_pdf', analisis_id=r[0]) }}" class="btn btn-success">
+            Descargar informe PDF
+        </a>
+
+        <a href="{{ url_for('auth.descargar_csv_filtrado', analisis_id=r[0]) }}" class="btn btn-outline-success">
+            Descargar CSV benigno
+        </a>
+
+        <a href="{{ url_for('auth.descargar_csv_malicioso', analisis_id=r[0]) }}" class="btn btn-outline-danger">
+            Descargar CSV malicioso
+        </a>
+
+        <form method="POST" action="{{ url_for('auth.eliminar_analisis', analisis_id=r[0]) }}"
+              onsubmit="return confirm('¿Seguro que quieres eliminar este análisis?');">
+            <button type="submit" class="btn btn-danger">
+                Eliminar análisis
+            </button>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}

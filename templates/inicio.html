@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio - Sistema IDS{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <div class="row align-items-center">
+
+        <div class="col-lg-7 mb-4">
+            <h1 class="display-4 fw-bold mb-4">
+                Sistema IDS para detección de tráfico malicioso
+            </h1>
+
+            <p class="lead text-light mb-4">
+                Plataforma web basada en Machine Learning para analizar archivos CSV de tráfico de red
+                y detectar posibles ataques DDoS.
+            </p>
+
+            <p class="text-light mb-4">
+                El sistema permite subir archivos compatibles con CIC-IDS2017 y analizarlos mediante
+                diferentes modelos supervisados, como Random Forest, Decision Tree y KNN.
+            </p>
+
+            {% if session.get("user_id") %}
+                <a href="{{ url_for('auth.analizar') }}" class="btn btn-warning btn-lg me-2">
+                    Analizar tráfico
+                </a>
+
+                <a href="{{ url_for('auth.ver_metricas') }}" class="btn btn-outline-light btn-lg">
+                    Ver métricas
+                </a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-warning btn-lg me-2">
+                    Iniciar sesión
+                </a>
+
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-light btn-lg">
+                    Registrarse
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    Funcionalidades principales
+                </div>
+
+                <div class="card-body">
+
+                    <div class="mb-3">
+                        <h5>Detección con Machine Learning</h5>
+                        <p class="text-muted mb-0">
+                            Clasificación automática de tráfico benigno y tráfico DDoS.
+                        </p>
+                    </div>
+
+                    <div class="mb-3">
+                        <h5>Comparación de modelos</h5>
+                        <p class="text-muted mb-0">
+                            Análisis mediante Random Forest, Decision Tree y KNN.
+                        </p>
+                    </div>
+
+                    <div class="mb-3">
+                        <h5>Historial de análisis</h5>
+                        <p class="text-muted mb-0">
+                            Cada usuario puede consultar sus análisis realizados y descargar informes PDF.
+                        </p>
+                    </div>
+
+                    <div class="mb-0">
+                        <h5>Panel de administración</h5>
+                        <p class="text-muted mb-0">
+                            Estadísticas globales, por usuario y por modelo para administradores.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row mt-5">
+
+        <div class="col-md-4 mb-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    Dataset
+                </div>
+                <div class="card-body">
+                    <h3>CIC-IDS2017</h3>
+                    <p class="text-muted mb-0">
+                        Conjunto de datos utilizado para entrenar y evaluar los modelos.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-header bg-success text-white">
+                    Modelos ML
+                </div>
+                <div class="card-body">
+                    <h3>3 modelos</h3>
+                    <p class="text-muted mb-0">
+                        Random Forest, Decision Tree y KNN.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    Detección
+                </div>
+                <div class="card-body">
+                    <h3>BENIGN / DDoS</h3>
+                    <p class="text-muted mb-0">
+                        Clasificación del tráfico como normal o potencialmente malicioso.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

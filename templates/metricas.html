@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Métricas de los modelos- Sistema IDS{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <div class="mb-4">
+        <h1 class="mb-2">Métricas de los modelos de Machine Learning</h1>
+        <p class="text-muted">
+            Comparación de los modelos entrenados con el dataset CIC-IDS2017 para la detección de tráfico benigno y ataques DDoS.
+        </p>
+    </div>
+
+    {% if metricas_modelos %}
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                Comparativa general de modelos
+            </div>
+
+            <div class="card-body">
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Modelo</th>
+                                <th>Accuracy</th>
+                                <th>BENIGN correctos</th>
+                                <th>DDoS correctos</th>
+                                <th>Falsos positivos</th>
+                                <th>Falsos negativos</th>
+                                <th>Errores totales</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for clave, datos in metricas_modelos.items() %}
+                                {% set matriz = datos.confusion_matrix %}
+                                {% set falsos_positivos = matriz[0][1] %}
+                                {% set falsos_negativos = matriz[1][0] %}
+                                {% set errores = falsos_positivos + falsos_negativos %}
+
+                                <tr>
+                                    <td><strong>{{ datos.nombre }}</strong></td>
+                                    <td>{{ "%.4f"|format(datos.accuracy * 100) }}%</td>
+                                    <td class="table-success">{{ matriz[0][0] }}</td>
+                                    <td class="table-success">{{ matriz[1][1] }}</td>
+                                    <td class="table-danger">{{ falsos_positivos }}</td>
+                                    <td class="table-danger">{{ falsos_negativos }}</td>
+                                    <td>{{ errores }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="text-muted mb-0">
+                    La tabla permite comparar el rendimiento de los distintos modelos entrenados sobre el mismo conjunto de prueba.
+                </p>
+
+            </div>
+        </div>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                Interpretación de la comparativa
+            </div>
+
+            <div class="card-body">
+                <p>
+                    Se han entrenado tres modelos de aprendizaje automático supervisado:
+                    <strong>Random Forest</strong>, <strong>Decision Tree</strong> y <strong>KNN</strong>.
+                    Todos ellos han sido evaluados sobre la misma partición de prueba del dataset CIC-IDS2017.
+                </p>
+
+                <p class="mb-0 text-muted">
+                    Random Forest obtiene el mejor resultado global, por lo que se considera el modelo principal del sistema,
+                    aunque la aplicación permite analizar archivos utilizando cualquiera de los tres modelos entrenados.
+                </p>
+            </div>
+        </div>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                Detalle por modelo
+            </div>
+
+            <div class="card-body">
+
+                <div class="mb-4">
+                    <label for="selectorModeloMetricas" class="form-label">Seleccionar modelo</label>
+                    <select id="selectorModeloMetricas" class="form-select">
+                        {% for clave, datos in metricas_modelos.items() %}
+                            <option value="{{ clave }}">{{ datos.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">
+                        Selecciona un modelo para visualizar sus métricas detalladas.
+                    </div>
+                </div>
+
+                {% for clave, datos in metricas_modelos.items() %}
+
+                    <div class="bloque-metricas-modelo" id="metricas-{{ clave }}" style="display: none;">
+
+                        <h4 class="mb-4">{{ datos.nombre }}</h4>
+
+                        <div class="row mb-4">
+
+                            <div class="col-md-4 mb-3">
+                                <div class="card text-center border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        Accuracy
+                                    </div>
+                                    <div class="card-body">
+                                        <h2>{{ "%.4f"|format(datos.accuracy * 100) }}%</h2>
+                                        <p class="text-muted mb-0">
+                                            Porcentaje total de predicciones correctas.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <div class="card text-center border-success">
+                                    <div class="card-header bg-success text-white">
+                                        BENIGN correctos
+                                    </div>
+                                    <div class="card-body">
+                                        <h2>{{ datos.confusion_matrix[0][0] }}</h2>
+                                        <p class="text-muted mb-0">
+                                            Tráfico normal correctamente clasificado.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <div class="card text-center border-danger">
+                                    <div class="card-header bg-danger text-white">
+                                        DDoS correctos
+                                    </div>
+                                    <div class="card-body">
+                                        <h2>{{ datos.confusion_matrix[1][1] }}</h2>
+                                        <p class="text-muted mb-0">
+                                            Ataques DDoS correctamente clasificados.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                Matriz de confusión
+                            </div>
+
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered text-center align-middle">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th></th>
+                                                <th>Predicho BENIGN</th>
+                                                <th>Predicho DDoS</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            <tr>
+                                                <th class="table-light">Real BENIGN</th>
+                                                <td class="table-success">
+                                                    <strong>{{ datos.confusion_matrix[0][0] }}</strong>
+                                                </td>
+                                                <td class="table-danger">
+                                                    <strong>{{ datos.confusion_matrix[0][1] }}</strong>
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <th class="table-light">Real DDoS</th>
+                                                <td class="table-danger">
+                                                    <strong>{{ datos.confusion_matrix[1][0] }}</strong>
+                                                </td>
+                                                <td class="table-success">
+                                                    <strong>{{ datos.confusion_matrix[1][1] }}</strong>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <p class="text-muted mb-0">
+                                    La diagonal principal representa las predicciones correctas.
+                                    Los valores fuera de la diagonal representan errores de clasificación.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                Errores de clasificación
+                            </div>
+
+                            <div class="card-body">
+                                <p>
+                                    <strong>BENIGN clasificado como DDoS:</strong>
+                                    {{ datos.confusion_matrix[0][1] }}
+                                </p>
+
+                                <p>
+                                    <strong>DDoS clasificado como BENIGN:</strong>
+                                    {{ datos.confusion_matrix[1][0] }}
+                                </p>
+
+                                <p class="mb-0 text-muted">
+                                    Estos valores permiten identificar falsos positivos y falsos negativos.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                Variables utilizadas
+                            </div>
+
+                            <div class="card-body">
+                                {% if datos.features %}
+                                    <p>
+                                        Este modelo utiliza <strong>{{ datos.features|length }}</strong> características de tráfico de red.
+                                    </p>
+
+                                    <p class="mb-2">
+                                        Algunas de ellas son:
+                                    </p>
+
+                                    <ul class="mb-0">
+                                        {% for feature in datos.features[:8] %}
+                                            <li><code>{{ feature }}</code></li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="mb-0 text-muted">
+                                        No se ha almacenado información sobre las variables utilizadas.
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                Reporte de clasificación
+                            </div>
+
+                            <div class="card-body">
+                                <pre class="bg-light p-3 border rounded">{{ datos.classification_report }}</pre>
+                            </div>
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+        </div>
+
+    {% else %}
+
+        <div class="alert alert-warning">
+            No se han encontrado métricas de los modelos. Ejecuta primero:
+            <code>python ml/train_models.py</code>
+        </div>
+
+    {% endif %}
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const selector = document.getElementById("selectorModeloMetricas");
+        const bloques = document.querySelectorAll(".bloque-metricas-modelo");
+
+        function mostrarModeloSeleccionado() {
+            if (!selector) return;
+
+            const modeloSeleccionado = selector.value;
+
+            bloques.forEach(function (bloque) {
+                bloque.style.display = "none";
+            });
+
+            const bloqueActivo = document.getElementById("metricas-" + modeloSeleccionado);
+
+            if (bloqueActivo) {
+                bloqueActivo.style.display = "block";
+            }
+        }
+
+        if (selector) {
+            selector.addEventListener("change", mostrarModeloSeleccionado);
+            mostrarModeloSeleccionado();
+        }
+    });
+</script>
+
+{% endblock %}  

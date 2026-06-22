@@ -1,0 +1,651 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard personal{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <div class="mb-4 d-flex justify-content-between align-items-start">
+        <div>
+            {% if modo_admin %}
+                <h1 class="mb-2">Dashboard del usuario</h1>
+                <p class="text-muted">
+                    Estadísticas personales del usuario seleccionado por el administrador.
+                </p>
+            {% else %}
+                <h1 class="mb-2">Mi dashboard personal</h1>
+                <p class="text-muted">
+                    Resumen de tus análisis realizados en el sistema IDS.
+                </p>
+            {% endif %}
+        </div>
+
+        {% if modo_admin %}
+            <a href="{{ url_for('auth.admin_usuarios') }}" class="btn btn-warning">
+                Volver a usuarios
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            Datos del usuario
+        </div>
+
+        <div class="card-body">
+            <p><strong>Nombre:</strong> {{ usuario[1] }}</p>
+            <p><strong>Email:</strong> {{ usuario[2] }}</p>
+
+            <p>
+                <strong>Rol:</strong>
+                {% if usuario[3] == "ADMIN" %}
+                    <span class="badge bg-warning text-dark">ADMIN</span>
+                {% else %}
+                    <span class="badge bg-secondary">USER</span>
+                {% endif %}
+            </p>
+
+            <p class="mb-0">
+                <strong>Estado:</strong>
+                {% if usuario[4] == 1 %}
+                    <span class="badge bg-success">Activo</span>
+                {% else %}
+                    <span class="badge bg-danger">Desactivado</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-header">
+                    Total análisis
+                </div>
+                <div class="card-body">
+                    <h2>{{ total }}</h2>
+                    <p class="text-muted mb-0">archivos procesados</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center shadow-sm border-success">
+                <div class="card-header bg-success text-white">
+                    Normales
+                </div>
+                <div class="card-body">
+                    <h2>{{ normales }}</h2>
+                    <p class="text-muted mb-0">clasificados como benignos</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center shadow-sm border-danger">
+                <div class="card-header bg-danger text-white">
+                    Maliciosos
+                </div>
+                <div class="card-body">
+                    <h2>{{ maliciosos }}</h2>
+                    <p class="text-muted mb-0">clasificados como DDoS</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center shadow-sm border-warning">
+                <div class="card-header bg-warning">
+                    % malicioso
+                </div>
+                <div class="card-body">
+                    <h2>{{ porcentaje }}%</h2>
+                    <p class="text-muted mb-0">sobre el total</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row mt-4">
+
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    Distribución personal de clasificaciones
+                </div>
+
+                <div class="card-body text-center">
+                    <div style="max-width: 280px; margin: 0 auto;">
+                        <canvas id="graficoPersonalClasificacion"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    Uso personal de modelos
+                </div>
+
+                <div class="card-body">
+                    <canvas id="graficoPersonalModelos"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card mt-4 shadow-sm">
+        <div class="card-header">
+            Uso de modelos
+        </div>
+
+        <div class="card-body">
+
+            {% if uso_modelos and uso_modelos|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Modelo</th>
+                                <th>Total de análisis</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for u in uso_modelos %}
+                                <tr>
+                                    <td>
+                                        {% if u[0] and modelos and u[0] in modelos %}
+                                            {{ modelos[u[0]].nombre }}
+                                        {% elif u[0] %}
+                                            {{ u[0] }}
+                                        {% else %}
+                                            Random Forest
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>{{ u[1] }}</strong></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info mb-0">
+                    Este usuario todavía no ha realizado análisis.
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <div class="card mt-4 shadow-sm">
+        <div class="card-header">
+            Últimos análisis
+        </div>
+
+        <div class="card-body">
+
+            {% if ultimos_analisis and ultimos_analisis|length > 0 %}
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Fecha</th>
+                                <th>Archivo</th>
+                                <th>Estado</th>
+                                <th>Clasificación</th>
+                                <th>Probabilidad maliciosa</th>
+                                <th>Modelo</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for a in ultimos_analisis %}
+                                <tr>
+                                    <td>{{ a[0] }}</td>
+
+                                    <td>
+                                        {% if a[6] %}
+                                            {{ a[6] }}
+                                        {% else %}
+                                            <span class="text-muted">Sin fecha</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>{{ a[1] }}</td>
+
+                                    <td>
+                                        {% if a[2] == "Finalizado" %}
+                                            <span class="badge bg-success">{{ a[2] }}</span>
+                                        {% elif a[2] == "Pendiente" %}
+                                            <span class="badge bg-warning text-dark">{{ a[2] }}</span>
+                                        {% elif a[2] == "Error" %}
+                                            <span class="badge bg-danger">{{ a[2] }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ a[2] }}</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if a[3] == "Malicioso" %}
+                                            <span class="badge bg-danger">Malicioso</span>
+                                        {% elif a[3] == "Normal" %}
+                                            <span class="badge bg-success">Normal</span>
+                                        {% elif a[3] %}
+                                            <span class="badge bg-secondary">{{ a[3] }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Sin resultado</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if a[4] is not none %}
+                                            {{ "%.2f"|format(a[4] * 100) }}%
+                                        {% else %}
+                                            <span class="text-muted">No disponible</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if a[5] and modelos and a[5] in modelos %}
+                                            {{ modelos[a[5]].nombre }}
+                                        {% elif a[5] %}
+                                            {{ a[5] }}
+                                        {% else %}
+                                            Random Forest
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if a[2] == "Finalizado" %}
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                <a href="{{ url_for('auth.ver_resultado', analisis_id=a[0]) }}" class="btn btn-sm btn-outline-primary">
+                                                    Ver
+                                                </a>
+
+                                                <a href="{{ url_for('auth.descargar_pdf', analisis_id=a[0]) }}" class="btn btn-sm btn-outline-success">
+                                                    PDF
+                                                </a>
+
+                                                <a href="{{ url_for('auth.descargar_csv_filtrado', analisis_id=a[0]) }}" class="btn btn-sm btn-outline-success">
+                                                    CSV benigno
+                                                </a>
+
+                                                <a href="{{ url_for('auth.descargar_csv_malicioso', analisis_id=a[0]) }}" class="btn btn-sm btn-outline-danger">
+                                                    CSV malicioso
+                                                </a>
+
+                                                <form method="POST"
+                                                      action="{{ url_for('auth.eliminar_analisis', analisis_id=a[0]) }}"
+                                                      onsubmit="return confirm('¿Seguro que quieres eliminar este análisis? Se eliminará también el archivo CSV original y los CSV generados.');">
+                                                    <button type="submit" class="btn btn-sm btn-danger">
+                                                        Eliminar
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        {% else %}
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                <span class="text-muted">No disponible</span>
+
+                                                <form method="POST"
+                                                      action="{{ url_for('auth.eliminar_analisis', analisis_id=a[0]) }}"
+                                                      onsubmit="return confirm('¿Seguro que quieres eliminar este análisis? Se eliminará también el archivo CSV original y los CSV generados.');">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                        Eliminar
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            {% else %}
+
+                <div class="alert alert-info mb-0">
+                    No hay análisis registrados.
+                </div>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+    <div class="card mt-4 shadow-sm">
+        <div class="card-header">
+            Consultar histórico de análisis
+        </div>
+
+        <div class="card-body">
+
+            <form method="GET"
+                  action="{% if modo_admin %}{{ url_for('auth.dashboard_usuario_admin', user_id=usuario[0]) }}{% else %}{{ url_for('auth.dashboard_personal') }}{% endif %}">
+
+                <div class="row">
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Fecha desde</label>
+                        <input type="date"
+                               class="form-control"
+                               name="fecha_desde"
+                               value="{{ filtros.fecha_desde }}">
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Fecha hasta</label>
+                        <input type="date"
+                               class="form-control"
+                               name="fecha_hasta"
+                               value="{{ filtros.fecha_hasta }}">
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label">Modelo</label>
+                        <select class="form-select" name="modelo">
+                            <option value="">Todos</option>
+                            {% for clave, datos in modelos.items() %}
+                                <option value="{{ clave }}" {% if filtros.modelo == clave %}selected{% endif %}>
+                                    {{ datos.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label">Clasificación</label>
+                        <select class="form-select" name="clasificacion">
+                            <option value="">Todas</option>
+                            <option value="Normal" {% if filtros.clasificacion == "Normal" %}selected{% endif %}>
+                                Normal
+                            </option>
+                            <option value="Malicioso" {% if filtros.clasificacion == "Malicioso" %}selected{% endif %}>
+                                Malicioso
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label">Estado</label>
+                        <select class="form-select" name="estado">
+                            <option value="">Todos</option>
+                            <option value="Finalizado" {% if filtros.estado == "Finalizado" %}selected{% endif %}>
+                                Finalizado
+                            </option>
+                            <option value="Pendiente" {% if filtros.estado == "Pendiente" %}selected{% endif %}>
+                                Pendiente
+                            </option>
+                            <option value="Error" {% if filtros.estado == "Error" %}selected{% endif %}>
+                                Error
+                            </option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="submit" class="btn btn-primary">
+                        Buscar
+                    </button>
+
+                    <a href="{% if modo_admin %}{{ url_for('auth.dashboard_usuario_admin', user_id=usuario[0], ver_todos=1) }}{% else %}{{ url_for('auth.dashboard_personal', ver_todos=1) }}{% endif %}"
+                       class="btn btn-outline-secondary">
+                        Ver todos
+                    </a>
+
+                    <a href="{% if modo_admin %}{{ url_for('auth.dashboard_usuario_admin', user_id=usuario[0]) }}{% else %}{{ url_for('auth.dashboard_personal') }}{% endif %}"
+                       class="btn btn-outline-danger">
+                        Limpiar filtros
+                    </a>
+                </div>
+
+            </form>
+
+            <hr>
+
+            {% if hay_busqueda %}
+
+                {% if analisis_filtrados and analisis_filtrados|length > 0 %}
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Fecha</th>
+                                    <th>Archivo</th>
+                                    <th>Estado</th>
+                                    <th>Clasificación</th>
+                                    <th>Probabilidad maliciosa</th>
+                                    <th>Modelo</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for a in analisis_filtrados %}
+                                    <tr>
+                                        <td>{{ a[0] }}</td>
+
+                                        <td>
+                                            {% if a[6] %}
+                                                {{ a[6] }}
+                                            {% else %}
+                                                <span class="text-muted">Sin fecha</span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>{{ a[1] }}</td>
+
+                                        <td>
+                                            {% if a[2] == "Finalizado" %}
+                                                <span class="badge bg-success">{{ a[2] }}</span>
+                                            {% elif a[2] == "Pendiente" %}
+                                                <span class="badge bg-warning text-dark">{{ a[2] }}</span>
+                                            {% elif a[2] == "Error" %}
+                                                <span class="badge bg-danger">{{ a[2] }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ a[2] }}</span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            {% if a[3] == "Malicioso" %}
+                                                <span class="badge bg-danger">Malicioso</span>
+                                            {% elif a[3] == "Normal" %}
+                                                <span class="badge bg-success">Normal</span>
+                                            {% elif a[3] %}
+                                                <span class="badge bg-secondary">{{ a[3] }}</span>
+                                            {% else %}
+                                                <span class="text-muted">Sin resultado</span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            {% if a[4] is not none %}
+                                                {{ "%.2f"|format(a[4] * 100) }}%
+                                            {% else %}
+                                                <span class="text-muted">No disponible</span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            {% if a[5] and modelos and a[5] in modelos %}
+                                                {{ modelos[a[5]].nombre }}
+                                            {% elif a[5] %}
+                                                {{ a[5] }}
+                                            {% else %}
+                                                Random Forest
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            {% if a[2] == "Finalizado" %}
+                                                <div class="d-flex gap-2 flex-wrap">
+                                                    <a href="{{ url_for('auth.ver_resultado', analisis_id=a[0]) }}" class="btn btn-sm btn-outline-primary">
+                                                        Ver
+                                                    </a>
+
+                                                    <a href="{{ url_for('auth.descargar_pdf', analisis_id=a[0]) }}" class="btn btn-sm btn-outline-success">
+                                                        PDF
+                                                    </a>
+
+                                                    <a href="{{ url_for('auth.descargar_csv_filtrado', analisis_id=a[0]) }}" class="btn btn-sm btn-outline-success">
+                                                        CSV benigno
+                                                    </a>
+
+                                                    <a href="{{ url_for('auth.descargar_csv_malicioso', analisis_id=a[0]) }}" class="btn btn-sm btn-outline-danger">
+                                                        CSV malicioso
+                                                    </a>
+
+                                                    <form method="POST"
+                                                          action="{{ url_for('auth.eliminar_analisis', analisis_id=a[0]) }}"
+                                                          onsubmit="return confirm('¿Seguro que quieres eliminar este análisis? Se eliminará también el archivo CSV original y los CSV generados.');">
+                                                        <button type="submit" class="btn btn-sm btn-danger">
+                                                            Eliminar
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            {% else %}
+                                                <div class="d-flex gap-2 flex-wrap">
+                                                    <span class="text-muted">No disponible</span>
+
+                                                    <form method="POST"
+                                                          action="{{ url_for('auth.eliminar_analisis', analisis_id=a[0]) }}"
+                                                          onsubmit="return confirm('¿Seguro que quieres eliminar este análisis? Se eliminará también el archivo CSV original y los CSV generados.');">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            Eliminar
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+
+                        </table>
+                    </div>
+
+                {% else %}
+
+                    <div class="alert alert-warning mb-0">
+                        No se han encontrado análisis con los filtros seleccionados.
+                    </div>
+
+                {% endif %}
+
+            {% else %}
+
+                <div class="alert alert-info mb-0">
+                    Utiliza los filtros superiores para buscar análisis concretos o pulsa
+                    <strong>Ver todos</strong> para mostrar el histórico completo.
+                </div>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+<div id="datosDashboardPersonal"
+     data-normales="{{ normales }}"
+     data-maliciosos="{{ maliciosos }}">
+</div>
+
+{% for u in uso_modelos %}
+    <div class="datosModeloPersonal"
+         data-nombre="{% if u[0] and modelos and u[0] in modelos %}{{ modelos[u[0]].nombre }}{% elif u[0] %}{{ u[0] }}{% else %}Random Forest{% endif %}"
+         data-total="{{ u[1] }}">
+    </div>
+{% endfor %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const datosDashboard = document.getElementById("datosDashboardPersonal");
+
+        if (datosDashboard) {
+            const normales = Number(datosDashboard.dataset.normales);
+            const maliciosos = Number(datosDashboard.dataset.maliciosos);
+
+            const ctxClasificacion = document.getElementById("graficoPersonalClasificacion");
+
+            if (ctxClasificacion) {
+                new Chart(ctxClasificacion, {
+                    type: "doughnut",
+                    data: {
+                        labels: ["Normales", "Maliciosos"],
+                        datasets: [{
+                            data: [normales, maliciosos],
+                            backgroundColor: ["#198754", "#dc3545"]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: "bottom"
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        const elementosModelo = document.querySelectorAll(".datosModeloPersonal");
+        const labelsModelos = [];
+        const datosModelos = [];
+
+        elementosModelo.forEach(function (elemento) {
+            labelsModelos.push(elemento.dataset.nombre);
+            datosModelos.push(Number(elemento.dataset.total));
+        });
+
+        const ctxModelos = document.getElementById("graficoPersonalModelos");
+
+        if (ctxModelos) {
+            new Chart(ctxModelos, {
+                type: "bar",
+                data: {
+                    labels: labelsModelos,
+                    datasets: [{
+                        label: "Análisis realizados",
+                        data: datosModelos,
+                        backgroundColor: ["#0d6efd", "#ffc107", "#6f42c1"]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}

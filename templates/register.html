@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Registro- Sistema IDS{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-5">
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white text-center">
+                <h4 class="mb-0">Crear cuenta</h4>
+            </div>
+
+            <div class="card-body p-4">
+
+                <p class="text-muted text-center mb-4">
+                    Regístrate para poder acceder al sistema de análisis de tráfico de red.
+                </p>
+
+                <form method="POST" action="{{ url_for('auth.register') }}">
+
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="nombre" 
+                            name="nombre" 
+                            placeholder="Introduce tu nombre"
+                            required
+                        >
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Correo electrónico</label>
+                        <input 
+                            type="email" 
+                            class="form-control" 
+                            id="email" 
+                            name="email" 
+                            placeholder="Introduce tu correo"
+                            required
+                        >
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <input 
+                            type="password" 
+                            class="form-control" 
+                            id="password" 
+                            name="password" 
+                            placeholder="Introduce una contraseña"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="btn btn-warning w-100 mt-3">
+                        Registrarse
+                    </button>
+
+                </form>
+
+            </div>
+
+            <div class="card-footer text-center">
+                <span class="text-muted">¿Ya tienes cuenta?</span>
+                <a href="{{ url_for('auth.login') }}" class="text-decoration-none">
+                    Inicia sesión aquí
+                </a>
+            </div>
+        </div>
+
+        <div class="card mt-4 shadow-sm">
+            <div class="card-body">
+                <h6 class="mb-2">Cuenta de usuario</h6>
+                <p class="mb-0 text-muted">
+                    Los usuarios registrados pueden subir archivos CSV, consultar su historial de análisis
+                    y visualizar los resultados generados por el modelo de detección.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,34 @@
+# Entorno virtual
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos temporales
+*.log
+.DS_Store
+Thumbs.db
+
+# Subidas de usuarios
+uploads/
+!uploads/.gitkeep
+!uploads/filtrados/.gitkeep
+
+# Dataset pesado
+ml/dataset/
+
+# Variables de entorno
+.env
+
+# Configuraciones locales
+instance/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code opcional
+.vscode/ml/models/model_knn.pkl

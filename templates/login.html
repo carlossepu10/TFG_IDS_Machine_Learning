@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Login- Sistema IDS{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-5">
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white text-center">
+                <h4 class="mb-0">Iniciar sesión</h4>
+            </div>
+
+            <div class="card-body p-4">
+
+                <p class="text-muted text-center mb-4">
+                    Accede al sistema IDS para analizar archivos CSV de tráfico de red.
+                </p>
+
+                <form method="POST" action="{{ url_for('auth.login') }}">
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Correo electrónico</label>
+                        <input 
+                            type="email" 
+                            class="form-control" 
+                            id="email" 
+                            name="email" 
+                            placeholder="Introduce tu correo"
+                            required
+                        >
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <input 
+                            type="password" 
+                            class="form-control" 
+                            id="password" 
+                            name="password" 
+                            placeholder="Introduce tu contraseña"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="btn btn-warning w-100 mt-3">
+                        Entrar
+                    </button>
+
+                </form>
+
+            </div>
+
+            <div class="card-footer text-center">
+                <span class="text-muted">¿No tienes cuenta?</span>
+                <a href="{{ url_for('auth.register') }}" class="text-decoration-none">
+                    Regístrate aquí
+                </a>
+            </div>
+        </div>
+
+        <div class="card mt-4 shadow-sm">
+            <div class="card-body">
+                <h6 class="mb-2">Sistema IDS basado en Machine Learning</h6>
+                <p class="mb-0 text-muted">
+                    Esta plataforma permite subir archivos CSV compatibles con CIC-IDS2017
+                    y analizarlos mediante los modelos Random Forest, Decision Tree y K-Nearest Neighbors, para detectar tráfico benigno o DDoS.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
